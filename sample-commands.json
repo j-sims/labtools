@@ -1,0 +1,11 @@
+[
+    {
+        "command": "echo 'First command execution'"
+    },
+    {
+        "command": "ls -l /"
+    },
+    {
+        "command": "echo 'Last command execution'"
+    }
+]
