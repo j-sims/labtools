@@ -208,3 +208,4 @@ __marimo__/
 commands.json
 hosts.json
 .codebuddy/
+testfile*

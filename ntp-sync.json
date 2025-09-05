@@ -1,0 +1,5 @@
+[
+    { "command": "killall -9 ntpd"},
+    { "command": "ntpdate 172.16.10.1"},
+    { "command": "date", "verbose":true}
+]

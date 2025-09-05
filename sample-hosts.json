@@ -1,8 +1,12 @@
 [
     {
-        "hostname": "test",
-        "password": "test123",
+        "hostname": "",
+        "password": "",
         "port": 22,
-        "username": "root"
+        "username": "root",
+        "s3_acc_id": "",
+        "s3_secret_key":"",
+        "s3_port": 9020,
+        "s3_ssl": false
     }
 ]

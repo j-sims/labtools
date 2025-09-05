@@ -1,0 +1,10 @@
+[
+    { "command": "isi s3 settings global modify --service true" },
+    { "command": "isi s3 settings global modify --https-only false"},
+    { "command": "isi auth users create --enabled true --password a --name test" },
+    { "command": "mkdir /ifs/test" },
+    { "command": "chown -R test /ifs/test"},
+    { "command": "isi s3 buckets create --name test --owner test --path /ifs/test"},
+    { "command": "isi s3 keys create --user test --show-key", "verbose":true }
+
+]
