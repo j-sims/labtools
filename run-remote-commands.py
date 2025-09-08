@@ -26,7 +26,6 @@ for host in hosts:
     port = host.get('port', 22)
     username = host['username']
     password = host['password']
-    print(f"Connecting to {hostname}...")
     try:
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
