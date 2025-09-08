@@ -45,7 +45,7 @@ for host in hosts:
             # Capture output
             output = stdout.read()
             if effective_verbose:
-                print(f"Output from {hostname}:\n{output.decode().strip()}")
+                print(f"Output from {hostname}: {output.decode().strip()}")
             exit_status = stdout.channel.recv_exit_status()
             if exit_status != 0:
                 print(f"Command failed on {hostname}: {command_str}")
