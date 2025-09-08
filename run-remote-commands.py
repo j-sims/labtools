@@ -3,12 +3,14 @@ import paramiko
 import argparse
 import os
 
-# Argument parser for verbose flag
+# Argument parser for verbose and quiet flags
 parser = argparse.ArgumentParser(description='Run remote commands with optional verbose output.')
 parser.add_argument('-v', '--verbose', action='store_true', help='Print command outputs')
+parser.add_argument('-q', '--quiet', action='store_true', help='Quiet mode: hide host status output')
 parser.add_argument('-c', '--commands-file', type=str, default='commands.json', help='Commands file to use (default: commands.json)')
 args = parser.parse_args()
 verbose = args.verbose
+quiet = args.quiet
 commands_file = args.commands_file
 
 if not os.path.isfile(commands_file):
@@ -63,4 +65,6 @@ for host in hosts:
         status_icon = f"{green_color}{check_mark}{reset_color}"
     else:
         status_icon = f"{red_color}{cross_mark}{reset_color}"
-    print(f"Host {hostname} : {host_status} {status_icon}")
+    if not quiet:
+        print(f"Host {hostname} : {host_status} {status_icon}")
+    # If quiet is enabled, skip the final host-status line but keep other outputs intact
