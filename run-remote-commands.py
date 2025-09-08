@@ -39,7 +39,8 @@ for host in hosts:
             verbose_command = cmd.get('verbose', None)
             effective_verbose = verbose if verbose_command is None else bool(verbose_command)
             if effective_verbose:
-                print(f"Running command on {hostname}: {command_str}")
+                if not quiet:
+                    print(f"Running command on {hostname}: {command_str}")  
             stdin, stdout, stderr = ssh.exec_command(command_str)
             # Capture output
             output = stdout.read()
