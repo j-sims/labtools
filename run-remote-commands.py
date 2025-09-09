@@ -2,16 +2,42 @@ import json
 import paramiko
 import argparse
 import os
+import re
 
-# Argument parser for verbose and quiet flags
-parser = argparse.ArgumentParser(description='Run remote commands with optional verbose output.')
+# Argument parser for verbose, quiet, and host filtering
+parser = argparse.ArgumentParser(description='Run remote commands with optional verbose output and host filtering.')
 parser.add_argument('-v', '--verbose', action='store_true', help='Print command outputs')
 parser.add_argument('-q', '--quiet', action='store_true', help='Quiet mode: hide host status output')
 parser.add_argument('-c', '--commands-file', type=str, default='commands.json', help='Commands file to use (default: commands.json)')
+parser.add_argument('-l', '--host-filter', type=str, default=None, help='Comma-separated list of regex patterns to filter hosts by hostname')
 args = parser.parse_args()
 verbose = args.verbose
 quiet = args.quiet
 commands_file = args.commands_file
+host_filter_raw = args.host_filter
+
+# Compile host filter patterns if provided
+host_patterns = []
+if host_filter_raw:
+    # Split on comma, trim whitespace, discard empties
+    pieces = [p.strip() for p in host_filter_raw.split(',')]
+    pieces = [p for p in pieces if p]
+    if not pieces:
+        print("Host filter provided but no valid patterns found; continuing without filter.")
+    else:
+        try:
+            host_patterns = [re.compile(p) for p in pieces]
+        except re.error as e:
+            print(f"Invalid regular expression in host filter: {e}")
+            exit(1)
+
+def host_matches_any(hostname, patterns):
+    if not patterns:
+        return True
+    for pat in patterns:
+        if pat.search(hostname):
+            return True
+    return False
 
 if not os.path.isfile(commands_file):
     print(f"Commands file '{commands_file}' not found.")
@@ -23,7 +49,20 @@ with open('hosts.json') as f:
 with open(commands_file) as f:
     commands = json.load(f)
 
-for host in hosts:
+# Apply host filtering (only those whose hostname matches any provided pattern)
+filtered_hosts = [h for h in hosts if host_matches_any(h.get('hostname',''), host_patterns)]
+
+if host_patterns and not filtered_hosts:
+    print("No hosts matched the provided host filter patterns. Exiting.")
+    exit(0)
+
+if host_patterns and not quiet:
+    matched_count = len(filtered_hosts)
+    total_count = len(hosts)
+    print(f"Host filter applied: {matched_count}/{total_count} hosts will be processed.")
+
+# Iterate over filtered hosts (or all if no filter)
+for host in filtered_hosts if host_patterns else hosts:
     hostname = host['hostname']
     port = host.get('port', 22)
     username = host['username']
