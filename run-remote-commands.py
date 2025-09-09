@@ -4,17 +4,20 @@ import argparse
 import os
 import re
 
-# Argument parser for verbose, quiet, and host filtering
+# Argument parser for verbose, quiet, host filtering, and command-number selection
 parser = argparse.ArgumentParser(description='Run remote commands with optional verbose output and host filtering.')
 parser.add_argument('-v', '--verbose', action='store_true', help='Print command outputs')
 parser.add_argument('-q', '--quiet', action='store_true', help='Quiet mode: hide host status output')
 parser.add_argument('-c', '--commands-file', type=str, default='commands.json', help='Commands file to use (default: commands.json)')
 parser.add_argument('-l', '--host-filter', type=str, default=None, help='Comma-separated list of regex patterns to filter hosts by hostname')
+parser.add_argument('-n', '--command-numbers', type=str, default=None,
+                    help='Comma-separated 1-based command numbers to run (e.g., "1,3,5")')
 args = parser.parse_args()
 verbose = args.verbose
 quiet = args.quiet
 commands_file = args.commands_file
 host_filter_raw = args.host_filter
+selected_command_numbers_raw = args.command_numbers
 
 # Compile host filter patterns if provided
 host_patterns = []
@@ -39,6 +42,7 @@ def host_matches_any(hostname, patterns):
             return True
     return False
 
+# Load commands file path validation
 if not os.path.isfile(commands_file):
     print(f"Commands file '{commands_file}' not found.")
     exit(1)
@@ -61,7 +65,51 @@ if host_patterns and not quiet:
     total_count = len(hosts)
     print(f"Host filter applied: {matched_count}/{total_count} hosts will be processed.")
 
-# Iterate over filtered hosts (or all if no filter)
+# Determine which commands to run (support 1-based indices with -n)
+selected_indices = None
+if selected_command_numbers_raw:
+    # Parse 1-based numbers, deduplicate, validate >= 1
+    tokens = [t.strip() for t in selected_command_numbers_raw.split(',')]
+    tokens = [t for t in tokens if t]
+    numbers = []
+    for tok in tokens:
+        if not tok.isdigit():
+            print(f"Warning: invalid command number '{tok}' ignored.")
+            continue
+        n = int(tok)
+        if n < 1:
+            print(f"Warning: command number '{tok}' is less than 1 and will be ignored.")
+            continue
+        numbers.append(n)
+    # Deduplicate preserving order
+    seen = set()
+    unique_numbers = []
+    for n in numbers:
+        if n not in seen:
+            seen.add(n)
+            unique_numbers.append(n)
+    if unique_numbers:
+        # Map to 0-based indices and validate against commands length
+        max_index = len(commands) - 1
+        chosen = []
+        for n in unique_numbers:
+            idx = n - 1
+            if 0 <= idx <= max_index:
+                chosen.append(commands[idx])
+            else:
+                print(f"Warning: command number {n} is out of range and will be skipped.")
+        if not chosen:
+            print("No valid commands remain after applying -n. Exiting.")
+            exit(0)
+        selected_indices = chosen
+        # Optional summary
+        print(f"Selected commands: {', '.join(str(n) for n in unique_numbers)}")
+    else:
+        print("No valid command numbers provided to -n. Exiting.")
+        exit(0)
+
+commands_to_run = selected_indices if selected_indices is not None else commands
+
 for host in filtered_hosts if host_patterns else hosts:
     hostname = host['hostname']
     port = host.get('port', 22)
@@ -72,7 +120,7 @@ for host in filtered_hosts if host_patterns else hosts:
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(hostname, port=port, username=username, password=password, timeout=10)
         host_status = 'complete'
-        for cmd in commands:
+        for cmd in commands_to_run:
             command_str = cmd['command']
             # Per-command verbosity override
             verbose_command = cmd.get('verbose', None)
