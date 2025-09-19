@@ -19,18 +19,21 @@ filename = None
 namespace = 'data'
 namespace_path = '/ifs/data/test'
 username = 'root'
-password = 'a'
+
 
 # Optional host override via CLI
 parser = argparse.ArgumentParser(description='Rantesting host override utility')
 parser.add_argument('-f', '--file', dest='filename', type=str, default=None, help='Path or identifier to use (stored in filename)')
 parser.add_argument('--host', type=str, default=None, help='Override the hardcoded host (e.g., 192.0.2.1)')
+parser.add_argument('-p', '--password', type=str, default='a', help='Override the default password "a"')
 args, _ = parser.parse_known_args()
 
 # Effective host selection: use CLI override if provided, otherwise fall back to hardcoded default below
 host_override = args.host
+password_override = args.password
 
 host = host_override if host_override else '172.16.10.10'
+PASS = password_override if password_override else 'a'
 
 # Wire parsed value to global filename variable for future reuse
 filename = args.filename
@@ -40,7 +43,6 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning) # Supresses 
 CLUSTERIP = host
 PORT=8080
 USER='root'
-PASS='a'
 
 uri = "https://%s:%s" % (CLUSTERIP, PORT)
 papi = uri + '/platform'
