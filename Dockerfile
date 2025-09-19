@@ -2,7 +2,7 @@
 FROM python:latest
 
 # Install required Python packages
-RUN pip install --no-cache-dir paramiko boto3
+RUN pip install --no-cache-dir paramiko boto3 requests
 
 # Prepare application directory
 RUN mkdir -p /app
