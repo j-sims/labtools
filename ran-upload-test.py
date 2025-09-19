@@ -26,6 +26,7 @@ parser = argparse.ArgumentParser(description='Rantesting host override utility')
 parser.add_argument('-f', '--file', dest='filename', type=str, default=None, help='Path or identifier to use (stored in filename)')
 parser.add_argument('--host', type=str, default=None, help='Override the hardcoded host (e.g., 192.0.2.1)')
 parser.add_argument('-p', '--password', type=str, default='a', help='Override the default password "a"')
+
 args, _ = parser.parse_known_args()
 
 # Effective host selection: use CLI override if provided, otherwise fall back to hardcoded default below
@@ -117,7 +118,7 @@ def checkdir(hostname, port, user, passwd, path):
         return False
 
 
-def setup(session,host, PORT, USER, PASS, namespace_path):
+def setup(session,host, PORT, username, password, namespace_path):
     if mkdir(host, PORT, username, password, namespace_path):
         #### Create Namespace
         encoded_data = json.dumps({ "path" : namespace_path })
